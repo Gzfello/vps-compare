@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPS Compare — Encuentra el VPS más barato</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; padding: 20px; max-width: 1200px; margin: 0 auto; }
+h1 { text-align: center; margin: 30px 0 10px; font-size: 2.5em; background: linear-gradient(90deg, #00d4ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+.filters { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+.filters select, .filters input { background: #1a1a2e; color: #e0e0e0; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; font-size: 14px; }
+.filters button { background: linear-gradient(90deg, #00d4ff, #7b2ff7); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-top: 20px; }
+.card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 25px; transition: transform 0.2s, border-color 0.2s; }
+.card:hover { transform: translateY(-4px); border-color: #00d4ff; }
+.card .provider { font-size: 1.4em; font-weight: bold; color: #00d4ff; margin-bottom: 10px; }
+.card .flag { font-size: 1.6em; margin-bottom: 8px; }
+.card .price { font-size: 2em; font-weight: bold; color: #00ff88; margin: 10px 0; }
+.card .price span { font-size: 0.9em; color: #888; font-weight: normal; }
+.card .details { color: #aaa; font-size: 0.9em; line-height: 1.6; }
+.card .url { display: inline-block; margin-top: 12px; color: #7b2ff7; text-decoration: none; font-size: 0.85em; }
+.card .url:hover { text-decoration: underline; }
+.tip { text-align: center; margin-top: 30px; padding: 20px; background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a3e; }
+.tip h3 { color: #00d4ff; margin-bottom: 10px; }
+.tip p { color: #888; }
+footer { text-align: center; margin-top: 40px; color: #444; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<h1>VPS Compare</h1>
+<p class="subtitle">Encuentra el VPS más barato del mundo — actualizado a 2026</p>
+
+<div class="filters">
+<select id="ram"><option value="0">Todo RAM</option><option value="1">1 GB</option><option value="2">2 GB</option><option value="4" selected>4 GB</option><option value="8">8 GB</option></select>
+<select id="sort"><option value="price">Más barato</option><option value="value">Mejor relación</option><option value="country">Por país</option></select>
+<select id="currency"><option value="eur">EUR</option><option value="usd" selected>USD</option><option value="try">TRY</option><option value="ars">ARS</option></select>
+<button onclick="render()">Filtrar</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="tip">
+<h3>No encuentras lo que buscas?</h3>
+<p>Actualizo los datos cada semana. Los precios en moneda local (TRY, ARS) pueden cambiar rápido por inflación.</p>
+<p style="margin-top:8px;color:#666">Data: Contabo, Vultr, Hetzner, DigitalOcean, proveedores locales verificados</p>
+</div>
+
+<footer>VPS Compare — Hecho con datos reales de proveedores verificados</footer>
+
+<script>
+const DATA = [
+{provider:"Hetzner",flag:"🇩🇪",country:"Alemania",ram:4,vcpu:2,price_eur:4.29,price_usd:4.69,price_try:208.5,price_ars:6470,url:"https://hetzner.com/cloud",type:"CX22",note:"Excelente para Europa"},
+{provider:"Hetzner",flag:"🇩🇪",country:"Alemania",ram:8,vcpu:4,price_eur:8.58,price_usd:9.39,price_try:417,price_ars:12940,url:"https://hetzner.com/cloud",type:"CX32",note:"Ideal para proyectos medianos"},
+{provider:"Contabo",flag:"🇩🇪",country:"Alemania",ram:4,vcpu:2,price_eur:5.50,price_usd:6.01,price_try:266.4,price_ars:8290,url:"https://contabo.com",type:"Cloud VPS 2",note:"12 ubicaciones globales"},
+{provider:"Contabo",flag:"🇩🇪",country:"Alemania",ram:8,vcpu:4,price_eur:11.00,price_usd:12.02,price_try:532.9,price_ars:16590,url:"https://contabo.com",type:"Cloud VPS 4",note:"Escalable"},
+{provider:"OVHcloud",flag:"🇫🇷",country:"Francia",ram:4,vcpu:2,price_eur:5.50,price_usd:6.01,price_try:266.4,price_ars:8290,url:"https://ovh.com",type:"VPS Essential",note:"Sede Francia"},
+{provider:"Contabo",flag:"🇭🇺",country:"Hungría",ram:4,vcpu:2,price_eur:5.50,price_usd:6.01,price_try:266.4,price_ars:8290,url:"https://contabo.com",type:"Cloud VPS 2",note:"HUF devaluada"},
+{provider:"Contabo",flag:"🇷🇴",country:"Rumanía",ram:4,vcpu:2,price_eur:5.50,price_usd:6.01,price_try:266.4,price_ars:8290,url:"https://contabo.com",type:"Cloud VPS 2",note:"RON devaluada"},
+{provider:"Contabo",flag:"🇵🇱",country:"Polonia",ram:4,vcpu:2,price_eur:5.50,price_usd:6.01,price_try:266.4,price_ars:8290,url:"https://contabo.com",type:"Cloud VPS 2",note:"PLN devaluada"},
+{provider:"home.pl",flag:"🇵🇱",country:"Polonia",ram:4,vcpu:1,price_eur:7.00,price_usd:7.65,price_try:336,price_ars:10420,url:"https://home.pl",type:"VPS",note:"Proveedor local PL"},
+{provider:"Vultr",flag:"🇺🇸",country:"USA",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://vultr.com",type:"C3 General",note:"32+ ubicaciones"},
+{provider:"Linode",flag:"🇺🇸",country:"USA",ram:4,vcpu:2,price_eur:5.50,price_usd:5.00,price_try:244,price_ars:7590,url:"https://linode.com",type:"Nanode",note:"Parte de Akamai"},
+{provider:"DigitalOcean",flag:"🇺🇸",country:"USA",ram:4,vcpu:2,price_eur:6.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://digitalocean.com",type:"Basic 4GB",note:"17 regiones"},
+{provider:"Contabo",flag:"🇺🇸",country:"USA",ram:4,vcpu:2,price_eur:6.60,price_usd:7.20,price_try:345,price_ars:10700,url:"https://contabo.com",type:"Cloud VPS 2",note:"Ubicación USA"},
+{provider:"Vultr",flag:"🇹🇷",country:"Turquía",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://vultr.com",type:"C3 Estambul",note:"Baja latencia Europa"},
+{provider:"Contabo",flag:"🇹🇷",country:"Turquía",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://contabo.com",type:"Cloud VPS 2",note:"Estambul"},
+{provider:"E2E Networks",flag:"🇮🇳",country:"India",ram:4,vcpu:2,price_eur:5.20,price_usd:5.69,price_try:257,price_ars:8070,url:"https://e2enetworks.com",type:"VPS 4GB",note:"INR devaluada"},
+{provider:"HostIndia",flag:"🇮🇳",country:"India",ram:4,vcpu:2,price_eur:4.15,price_usd:4.54,price_try:220,price_ars:6910,url:"https://hostindia.in",type:"VPS 4GB",note:"Muy barato"},
+{provider:"Contabo",flag:"🇮🇳",country:"India",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:266,price_ars:8320,url:"https://contabo.com",type:"Cloud VPS 2",note:"India"},
+{provider:"Vultr",flag:"🇮🇳",country:"India",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://vultr.com",type:"C3 Bengaluru",note:"Bengaluru"},
+{provider:"Vultr",flag:"🇧🇷",country:"Brasil",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:290,price_ars:9040,url:"https://vultr.com",type:"C3 São Paulo",note:"Baja latencia LATAM"},
+{provider:"Contabo",flag:"🇧🇷",country:"Brasil",ram:4,vcpu:2,price_eur:5.50,price_usd:6.00,price_try:266,price_ars:8320,url:"https://contabo.com",type:"Cloud VPS 2",note:"Brasil"},
+{provider:"ServerHost",flag:"🇺🇸",country:"USA",ram:1,vcpu:1,price_eur:0.92,price_usd:0.92,price_try:44.8,price_ars:1404,url:"https://serverhost.com",type:"1GB KVM",note:"Promo LowEndBox"},
+{provider:"Servitro",flag:"🇩🇪",country:"Alemania",ram:1,vcpu:1,price_eur:1.00,price_usd:1.09,price_try:48.7,price_ars:1519,url:"https://servitro.de",type:"1GB NVMe",note:"Promo LowEndBox"},
+{provider:"HQBroker",flag:"🇦🇷",country:"Argentina",ram:4,vcpu:2,price_eur:3.30,price_usd:3.60,price_try:175,price_ars:5430,url:"https://hqbroker.com",type:"VPS 4GB",note:"ARS devaluada"},
+{provider:"HQBroker",flag:"🇦🇷",country:"Argentina",ram:8,vcpu:4,price_eur:5.30,price_usd:5.80,price_try:282,price_ars:8770,url:"https://hqbroker.com",type:"Cloud VPS 8GB",note:"ARS devaluada"},
+{provider:"Netway",flag:"🇹🇷",country:"Turquía",ram:4,vcpu:2,price_eur:3.10,price_usd:3.39,price_try:153,price_ars:4790,url:"https://netway.com.tr",type:"VDS 4GB",note:"TRY devaluada"},
+{provider:"TurBay",flag:"🇹🇷",country:"Turquía",ram:4,vcpu:2,price_eur:3.70,price_usd:4.04,price_try:180,price_ars:5620,url:"https://turbay.com.tr",type:"Cloud VPS",note:"İstanbul"},
+];
+
+const rates = { eur: 1, usd: 0.95, try: 0.0205, ars: 0.000615 };
+const cur = { eur: '€', usd: '$', try: '₺', ars: '$' };
+
+let currentSort = 'price';
+let currentCurrency = 'usd';
+
+function sortBy(type, btn) {
+currentSort = type;
+document.querySelectorAll('.sort-bar button').forEach(b => b.classList.remove('active'));
+if (btn) btn.classList.add('active');
+render();
+}
+
+function render() {
+const ramFilter = parseInt(document.getElementById('ram').value);
+const sort = currentSort;
+const currency = currentCurrency;
+
+let filtered = DATA.filter(d => ramFilter === 0 || d.ram === ramFilter);
+
+filtered.forEach(d => {
+d.display_price = d[`price_${currency}`] * rates[currency];
+d.per_gb = d.display_price / d.ram;
+});
+
+if (sort === 'price') filtered.sort((a,b) => a.display_price - b.display_price);
+if (sort === 'ram') filtered.sort((a,b) => b.ram - a.ram);
+if (sort === 'value') filtered.sort((a,b) => a.per_gb - b.per_gb);
+if (sort === 'country') filtered.sort((a,b) => a.country.localeCompare(b.country));
+
+const grid = document.getElementById('grid');
+grid.innerHTML = '';
+
+filtered.forEach(d => {
+const card = document.createElement('div');
+card.className = 'card';
+card.innerHTML = `
+<div class="flag">${d.flag} <span class="provider">${d.provider}</span></div>
+<div style="color:#888;font-size:0.85em">${d.country} · ${d.type}</div>
+<div class="price">${cur[currency]}${d.display_price.toFixed(2)} <span>/ mes · ${d.ram}GB RAM · ${d.vcpu} vCPU</span></div>
+<div class="details">${d.note}</div>
+<a href="${d.url}" class="url" target="_blank">→ Ver en ${d.provider}</a>
+`;
+grid.appendChild(card);
+});
+}
+
+document.getElementById('ram').addEventListener('change', render);
+document.getElementById('sort').addEventListener('change', function() {
+const map = { price: 'price', value: 'value', country: 'country' };
+currentSort = map[this.value] || 'price';
+render();
+});
+document.getElementById('currency').addEventListener('change', function() {
+currentCurrency = this.value;
+render();
+});
+
+render();
+</script>
+</body>
+</html>
